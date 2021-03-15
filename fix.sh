@@ -6,14 +6,13 @@ source fix.conf
 
 checkout_and_start_zigbee2mqtt()
 {
-# TODO: uncomment this when releasing
-#    git clone $FIX_GITHUB .
-#    npm install
-#    if [ $? != 0 ];
-#    then
-#        echo "Error in NPM install, bye"
-#        exit 2
-#    fi
+    git clone $FIX_GITHUB .
+    npm install
+    if [ $? != 0 ];
+    then
+        echo "Error in NPM install, bye"
+        exit 2
+    fi
     echo "Setting config"
     cat <<EOF > data/configuration.yaml
 homeassistant: false
@@ -35,38 +34,42 @@ EOF
     # Run zigbee-herdsman to create a coordinator-backup.json
 }
 
+repair_coordinator() 
+{
+    # parseFalse data from data/coordinator_backup.json
+    tableLen=$(python -c "import json,sys;print(json.load(sys.stdin)['data']['ZCD_NV_NIB']['len']);" < data/coordinator_backup.json)
+    echo "Table length is $tableLen"
+}
 
 # Script Entry point
 
-echo $!
 STARTING_DIR=`pwd`
 echo "1: Create Tempdir"
-# TODO: uncomment this when releasing
-#if [ -d $FIX_TEMPDIR ];
-#then
-#    echo "Target dir $FIX_TEMPDIR exists, please delete it first or choose another directory"
-#    exit 0
-#fi
-#mkdir -p $FIX_TEMPDIR
+if [ -d $FIX_TEMPDIR ];
+then
+    echo "Target dir $FIX_TEMPDIR exists, please delete it first or choose another directory"
+    exit 0
+fi
+mkdir -p $FIX_TEMPDIR
 if [ ! -d $FIX_TEMPDIR ];
 then
     echo "Something went wrong creating the tempdir"
     exit 1
 fi
+echo "2. Switch directory"
 cd $FIX_TEMPDIR
-
-echo "2: check if existing zigbee2mqtt"
-
-if [ $FIX_EXISTING_ZIGBEE2MQTT != "False" ];
+if [ $FIX_GITHUB_CLONE == "True" ]
 then
-    if [ -d $FIX_EXISTING_ZIGBEE2MQTT_DIR ];
-    then
-        echo "doing some stuff..."
-    fi
-else
+    echo "3. checking out zigbee2mqtt"
     checkout_and_start_zigbee2mqtt
 fi
 
+repair_coordinator
 
 echo "X: go back to starting dir, cleanup and finish"
 cd $STARTING_DIR
+if [ $FIX_GITHUB_CLONE == "True" ]
+then
+    echo "X+1. deleting temp dir"
+    rm -rf $FIX_TEMPDIR
+fi
