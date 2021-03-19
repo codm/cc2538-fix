@@ -102,7 +102,7 @@ TODO
 
 #### You can cleanup this repository by:
 ```
-rm -rf cc2538-fixscript
+rm -rf cc2538-fix
 ```
 
 #German
